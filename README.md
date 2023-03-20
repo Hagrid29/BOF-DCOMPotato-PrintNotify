@@ -15,7 +15,7 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Svchost\print
 ```
 --pprog : program to launch. Default cmd.exe
 --pargs : command line argument to pass to program. Default NULL
---pmode : create process call. 1 for CreateProcessWithTokenW. 2 for CreateProcessAsUser. 3 for NetUserAdd Default 1
+--pmode : create process call. 1 for CreateProcessWithTokenW. 2 for CreateProcessAsUser. 3 for NetUserAdd. Default 1
 ```
 
 execute command with `CreateProcessWithTokenW`
