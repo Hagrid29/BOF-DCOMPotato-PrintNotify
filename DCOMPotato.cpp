@@ -283,6 +283,7 @@ void go(char* args, int alen)
 	
 	HANDLE hTokenLogon = NULL;
 	
+	//add the INTERACTIVE sid ref: https://decoder.cloud/2022/09/21/giving-juicypotato-a-second-chance-juicypotatong/
 	//https://stackoverflow.com/questions/5023607/how-to-use-logonuser-properly-to-impersonate-domain-user-from-workgroup-client
 	if (!ADVAPI32$LogonUserA("X", "X", "X", LOGON32_LOGON_NEW_CREDENTIALS, LOGON32_PROVIDER_WINNT50, &hTokenLogon) || !BeaconUseToken(hTokenLogon))
 	{
