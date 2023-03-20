@@ -1,8 +1,8 @@
 #DCOMPotato Bof
 #created by Hagrid29
 
-beacon_command_register("DCOMPotato", "Obtain SYSTEM privilege with SeImpersonate privilege by passing a malicious IUnknwon object to DCOM call of PrintNotify.", 
-	"DCOMPotato --pprog [program to launch <optional, default cmd.exe>] --pargs [argument <optional>] --pmode [API to create process <1: CreateProcessWithTokenW or 2: CreateProcessAsUser> <optional, default 1>]");
+beacon_command_register("DCOMPotato", "Get SYSTEM via SeImpersonate privileges.", 
+	"DCOMPotato --pprog [program to launch <optional, default cmd.exe>] --pargs [argument <optional>] --pmode [API to create process <1: CreateProcessWithTokenW or 2: CreateProcessAsUser or 3: NetUserAdd> <optional, default 1>]");
 
 alias DCOMPotato {
 	$bid = $1;

